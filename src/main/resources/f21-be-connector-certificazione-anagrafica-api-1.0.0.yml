@@ -1,0 +1,33 @@
+swagger: '2.0'
+info:
+  description: 'API di richiesta di caricamento dei dati di anagrafica per la certificazione.'
+  version: '1.0.0'
+  title: 'f21-be-connector-certificazione-anagrafica-api'
+host: 0.0.0.0
+basePath: /certificazione-connector
+schemes:
+  - http
+paths:
+  /richiesta-di-caricamento-anagrafica:
+    post:
+      summary: (Asincrona) - Avvio di una nuova attività di caricamento dell'anagrafica.
+      operationId: create
+      produces:
+        - application/json
+      responses:
+        '202':
+          description: Avvia un nuovo caricamento.
+          schema:
+            type: object
+            required:
+              - creationTime
+            properties:
+              creationTime:
+                type: string
+                format: date-time
+    delete:
+      summary: (Asincrona) - Cancella i dati di anagrafica
+      operationId: delete
+      responses:
+        '204':
+          description: Deleted.

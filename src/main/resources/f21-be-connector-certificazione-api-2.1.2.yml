@@ -1,0 +1,180 @@
+swagger: '2.0'
+
+info:
+  description: 'API di richiesta di caricamento dati per la certificazione.'
+  version: '2.1.1'
+  title: 'f21-be-connector-certificazione-api'
+host: 0.0.0.0
+basePath: /certificazione-connector
+schemes:
+  - http
+parameters:
+  ProgrammaEnum:
+    in: query
+    name: programma
+    required: true
+    type: string
+    enum:
+      - fesr
+      - fse
+paths:
+  /richiesta-di-caricamento:
+    get:
+      summary: Lettura di tutte le richiesta di caricamento presenti sul sistema.
+      operationId: read-list
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Lista di tutte le richiesta di caricamento presenti sul sistema.
+          schema:
+            $ref: '#/definitions/ResponseList'
+    post:
+      summary: (Asincrona) - Avvio di una nuova attività di caricamento dei dati.
+      operationId: create
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/ProgrammaEnum'
+        - in: body
+          name: requestBody
+          description: Filtri di esclusione da utilizzare per l'attività di caricamento.
+          required: false
+          schema:
+            $ref: '#/definitions/Request'
+      responses:
+        '200':
+          description: Dati relativi alla richiesta di caricamento.
+          schema:
+            $ref: '#/definitions/Response'
+        '201':
+          description: Status AWAITING (Richiesta creata ed in attesa di essere elaborata)
+          schema:
+            $ref: '#/definitions/Response'
+        '202':
+          description: Status RUNNING (Richiesta già in fase di elaborazione)
+          schema:
+            $ref: '#/definitions/Response'
+        '409':
+          description: Status DELETING (La richiesta, per gli specifici filtri utilizzati, risulta in fase di cancellazione.)
+          schema:
+            $ref: '#/definitions/Response'
+  /richiesta-di-caricamento/{requestId}:
+    delete:
+      summary: (Asincrona) - Cancella i dati di una specifica requestId.
+      operationId: delete
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: requestId
+          description: identificativo richiesta
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK.
+          schema:
+            $ref: '#/definitions/Response'
+    get:
+      summary: Lettura dei dati di una richiesta di caricamento.
+      operationId: read
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: requestId
+          description: identificativo richiesta
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Dati della Richiesta di caricamento.
+          schema:
+            $ref: '#/definitions/Response'
+definitions:
+  StatusEnum:
+    type: string
+    enum:
+      - AWAITING
+      - RUNNING
+      - COMPLETED
+      - ERROR
+      - DELETING
+    description: Status AWAITING indica che il caricamento e' in attesa di essere processato; status COMPLETED indica che il caricamento e' stato completato.
+  Request:
+    type: object
+    properties:
+      letturaParziale:
+        type: boolean
+        description: Attivando questo flag (true) il caricamento avverrà solo per le strutture dati non sottoposte al filtraggio delle esclusioni.
+      esclusioni:
+        $ref: '#/definitions/Esclusioni'
+  Esclusioni:
+    type: object
+    description: Questo filtro è utilizzabile solo quando il campo 'solo-dati-attuali' non è impostato a true,
+    properties:
+      codBando:
+        type: array
+        items:
+          type: string
+          maxLength: 50
+      codProgetto:
+        type: array
+        items:
+          type: string
+          maxLength: 50
+      codPriorita:
+        type: array
+        items:
+          type: string
+          maxLength: 10
+      codObiettivo:
+        type: array
+        items:
+          type: string
+          maxLength: 10
+      codAzione:
+        type: array
+        items:
+          type: string
+          maxLength: 20
+  ResponseList:
+    type: array
+    items:
+      $ref: '#/definitions/Response'
+  Response:
+    type: object
+    required:
+      - creationTime
+      - status
+      - requestId
+    properties:
+      status:
+        $ref: '#/definitions/StatusEnum'
+      requestId:
+        type: integer
+        format: int64
+        description: Identificativo da utilizzare per il servizio di read/delete
+      programma:
+        type: string
+      letturaParziale:
+        type: boolean
+      esclusioni:
+        $ref: '#/definitions/Esclusioni'
+      creationTime:
+        type: string
+        format: date-time
+      updateTime:
+        type: string
+        format: date-time
+      message:
+        type: string
